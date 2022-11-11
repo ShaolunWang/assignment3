@@ -48,20 +48,60 @@ object Assignment3Standalone {
         case n: IntV  => IntTy
         case b: BoolV => BoolTy
         case s: StringV => StringTy
-        case Let(x, e1, e2) => 
+        case Let(x: Variable, e1: Expr, e2: Expr) => 
         {
           ctx + (x -> tyOf(ctx, e1))
           //-----------
           tyOf(ctx, e2)
         }
-        case Lambda(x, ty, e) => 
+        case Lambda(x: Variable, ty: Type, e: Expr) => 
         {
+          // Adding things into context
           ctx + (x -> ty)
-          tyOf(ctx, e)
+          // return the type of ty -> e
+          FunTy(ty, tyOf(ctx, e))
         }
-        case r: RecV  =>
+        case RecV(f: Variable, x: Variable, tyx: Type, ty: Type, e: Expr)  =>
         {
-          tyOf(r)
+          ctx + (x -> tyx)
+          var t2 = tyOf(ctx, e)
+          ty match
+          {
+            case FunTy(tyx, t2) => 
+            {
+              ctx + (f -> ty)
+              ty
+            }
+            case _ => sys.error("Type Mismatch")
+          }
+        }
+        case Apply(e1: Expr, e2: Expr) =>
+        {
+          var t1 = tyOf(ctx, e1)
+          var t2 = tyOf(ctx, e2)
+          t1 match 
+          {
+            case FunTy(t1, t2) => t2
+            case _ => sys.error("Type mismatch")
+          }          
+        }
+        case EmptyList(ty: Type) =>
+        {
+          ty
+        }
+        case Cons(e: Expr, e2: Expr) =>
+        {
+          var t = tyOf(ctx, e)
+          var lt = tyOf(ctx, e2)
+          lt match 
+          {
+            case ListTy(t) => lt
+            case _         => sys.error("Type mismatch")
+          }
+        }
+        case ListCase(e: Expr, e1: Expr, x: Variable, y: Variable, e2: Expr) =>
+        {
+          var t = tyOf(ctx, e)
         }
       }
 
