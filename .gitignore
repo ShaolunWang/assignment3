@@ -1,0 +1,5 @@
+.metals/
+.DS_Store
+*.gif
+*.bloop/
+project/

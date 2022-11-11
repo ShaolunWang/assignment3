@@ -1,0 +1,141 @@
+[debug] > Exec(early(addDefaultCommands), None, None)
+[debug] > Exec(addDefaultCommands, None, None)
+[debug] > Exec(early(initialize), None, None)
+[debug] > Exec(initialize, None, None)
+[debug] > Exec(boot, None, None)
+[debug] > Exec(writeSbtVersion, None, None)
+[debug] > Exec(reload, None, None)
+[debug] > Exec(sbtStashOnFailure, None, None)
+[debug] > Exec(onFailure loadFailed, None, None)
+[debug] > Exec(loadp, None, None)
+[info] welcome to sbt 1.7.1 (Azul Systems, Inc. Java 17.0.3)
+[debug] Load.defaultLoad until apply took 25.191667ms
+[debug]                 Load.loadUnit: plugins took 26.814417ms
+[debug]                 Load.loadUnit: defsScala took 0.594542ms
+[debug] [Loading] Scanning directory /Users/me/school/epl/cw3/Assn3/project/project
+[debug]                   Load.loadUnit: mkEval took 2.419417ms
+[debug] [Loading] Found non-root projects 
+[debug] [Loading] Done in /Users/me/school/epl/cw3/Assn3/project/project, returning: ()
+[debug] deducing auto plugins based on known facts Set(Atom(sbt.plugins.CorePlugin)) and clauses Clauses(Clause(Atom(sbt.plugins.JvmPlugin),Set(Atom(sbt.plugins.IvyPlugin)))
+[debug] Clause(Atom(sbt.ScriptedPlugin),Set(Atom(sbt.plugins.JvmPlugin)))
+[debug] Clause(Atom(sbt.plugins.SbtPlugin),Set(Atom(sbt.ScriptedPlugin)))
+[debug] Clause(Atom(sbt.plugins.SemanticdbPlugin),Set(Atom(sbt.plugins.JvmPlugin)))
+[debug] Clause(Atom(sbt.plugins.JUnitXmlReportPlugin),Set(Atom(sbt.plugins.JvmPlugin)))
+[debug] Clause(Atom(sbt.plugins.MiniDependencyTreePlugin),Set(Atom(sbt.plugins.JvmPlugin)))
+[debug] Clause(Atom(sbt.plugins.CorePlugin),Set(Atom(sbt.plugins.IvyPlugin)))
+[debug] Clause(Atom(sbt.plugins.IvyPlugin),Set(Atom(sbt.plugins.JvmPlugin)))
+[debug] Clause(Atom(sbt.plugins.JvmPlugin),Set(Atom(sbt.plugins.SemanticdbPlugin)))
+[debug] Clause(Atom(sbt.plugins.JvmPlugin),Set(Atom(sbt.plugins.JUnitXmlReportPlugin)))
+[debug] Clause(Atom(sbt.plugins.CorePlugin),Set(Atom(sbt.plugins.Giter8TemplatePlugin)))
+[debug] Clause(Atom(sbt.plugins.JvmPlugin),Set(Atom(sbt.plugins.MiniDependencyTreePlugin))))
+[debug]   :: deduced result: Matched(sbt.plugins.CorePlugin,sbt.plugins.Giter8TemplatePlugin,sbt.plugins.IvyPlugin,sbt.plugins.JvmPlugin,sbt.plugins.MiniDependencyTreePlugin,sbt.plugins.JUnitXmlReportPlugin,sbt.plugins.SemanticdbPlugin)
+[debug] Plugins.deducer#function took 5.224667 ms
+[info] loading settings for project assn3-build-build from metals.sbt ...
+[debug]                     Load.resolveProject(assn3-build-build) took 15.810583ms
+[debug]                   Load.loadTransitive: finalizeProject(Project(id assn3-build-build, base: /Users/me/school/epl/cw3/Assn3/project/project, plugins: List(<none>))) took 28.853958ms
+[debug] [Loading] Done in /Users/me/school/epl/cw3/Assn3/project/project, returning: (assn3-build-build)
+[debug]                 Load.loadUnit: loadedProjectsRaw took 101.16325ms
+[debug]                 Load.loadUnit: cleanEvalClasses took 1.944625ms
+[debug]               Load.loadUnit(file:/Users/me/school/epl/cw3/Assn3/project/project/, ...) took 132.712042ms
+[debug]             Load.apply: load took 269.426292ms
+[debug]             Load.apply: resolveProjects took 2.188208ms
+[debug]             Load.apply: finalTransforms took 22.910167ms
+[debug]             Load.apply: config.delegates took 2.950291ms
+[debug]             Load.apply: Def.make(settings)... took 156.444792ms
+[debug]             Load.apply: structureIndex took 43.281959ms
+[debug]             Load.apply: mkStreams took 0.674292ms
+[info] loading project definition from /Users/me/school/epl/cw3/Assn3/project/project
+[debug] Running task... Cancel: Signal, check cycles: false, forcegc: true
+[debug]           Load.loadUnit: plugins took 872.403625ms
+[debug]           Load.loadUnit: defsScala took 0.001875ms
+[debug] [Loading] Scanning directory /Users/me/school/epl/cw3/Assn3/project
+[debug]             Load.loadUnit: mkEval took 0.101208ms
+[debug] [Loading] Found non-root projects 
+[debug] [Loading] Done in /Users/me/school/epl/cw3/Assn3/project, returning: ()
+[debug] deducing auto plugins based on known facts Set(Atom(sbt.plugins.CorePlugin)) and clauses Clauses(Clause(Atom(sbt.plugins.JvmPlugin),Set(Atom(sbt.plugins.IvyPlugin)))
+[debug] Clause(Atom(sbt.ScriptedPlugin),Set(Atom(sbt.plugins.JvmPlugin)))
+[debug] Clause(Atom(sbt.plugins.SbtPlugin),Set(Atom(sbt.ScriptedPlugin)))
+[debug] Clause(Atom(sbt.plugins.SemanticdbPlugin),Set(Atom(sbt.plugins.JvmPlugin)))
+[debug] Clause(Atom(sbt.plugins.JUnitXmlReportPlugin),Set(Atom(sbt.plugins.JvmPlugin)))
+[debug] Clause(Atom(sbt.plugins.MiniDependencyTreePlugin),Set(Atom(sbt.plugins.JvmPlugin)))
+[debug] Clause(Atom(bloop.integrations.sbt.BloopPlugin),Set(Atom(sbt.plugins.JvmPlugin)))
+[debug] Clause(Atom(sbt.plugins.CorePlugin),Set(Atom(sbt.plugins.IvyPlugin)))
+[debug] Clause(Atom(sbt.plugins.IvyPlugin),Set(Atom(sbt.plugins.JvmPlugin)))
+[debug] Clause(Atom(sbt.plugins.JvmPlugin),Set(Atom(sbt.plugins.SemanticdbPlugin)))
+[debug] Clause(Atom(sbt.plugins.JvmPlugin),Set(Atom(sbt.plugins.JUnitXmlReportPlugin)))
+[debug] Clause(Atom(sbt.plugins.CorePlugin),Set(Atom(sbt.plugins.Giter8TemplatePlugin)))
+[debug] Clause(Atom(sbt.plugins.JvmPlugin),Set(Atom(sbt.plugins.MiniDependencyTreePlugin)))
+[debug] Clause(Atom(sbt.plugins.JvmPlugin),Set(Atom(bloop.integrations.sbt.BloopPlugin))))
+[debug]   :: deduced result: Matched(sbt.plugins.CorePlugin,sbt.plugins.Giter8TemplatePlugin,sbt.plugins.IvyPlugin,sbt.plugins.JvmPlugin,bloop.integrations.sbt.BloopPlugin,sbt.plugins.MiniDependencyTreePlugin,sbt.plugins.JUnitXmlReportPlugin,sbt.plugins.SemanticdbPlugin)
+[debug] Plugins.deducer#function took 1.011916 ms
+[info] loading settings for project assn3-build from metals.sbt ...
+[debug]               Load.resolveProject(assn3-build) took 6.551208ms
+[debug]             Load.loadTransitive: finalizeProject(Project(id assn3-build, base: /Users/me/school/epl/cw3/Assn3/project, plugins: List(<none>))) took 7.912375ms
+[debug] [Loading] Done in /Users/me/school/epl/cw3/Assn3/project, returning: (assn3-build)
+[debug]           Load.loadUnit: loadedProjectsRaw took 16.070125ms
+[debug]           Load.loadUnit: cleanEvalClasses took 0.41575ms
+[debug]         Load.loadUnit(file:/Users/me/school/epl/cw3/Assn3/project/, ...) took 889.309ms
+[debug]       Load.apply: load took 889.995792ms
+[debug]       Load.apply: resolveProjects took 0.05425ms
+[debug]       Load.apply: finalTransforms took 16.925042ms
+[debug]       Load.apply: config.delegates took 0.258083ms
+[debug]       Load.apply: Def.make(settings)... took 69.268834ms
+[debug]       Load.apply: structureIndex took 14.829625ms
+[debug]       Load.apply: mkStreams took 0.001459ms
+[info] loading project definition from /Users/me/school/epl/cw3/Assn3/project
+[debug] Evaluating tasks: bloopInstall
+[debug] Running task... Cancel: Signal, check cycles: false, forcegc: true
+[success] Generated .bloop/assn3-build.json
+[success] Total time: 0 s, completed Nov 8, 2022, 10:09:38 PM
+[debug] Running task... Cancel: Signal, check cycles: false, forcegc: true
+[debug]     Load.loadUnit: plugins took 1319.999625ms
+[debug]     Load.loadUnit: defsScala took 0.391667ms
+[debug] [Loading] Scanning directory /Users/me/school/epl/cw3/Assn3
+[debug]       Load.loadUnit: mkEval took 0.084708ms
+[debug] [Loading] Found root project assignment3 w/ remaining 
+[debug] deducing auto plugins based on known facts Set(Atom(sbt.plugins.CorePlugin)) and clauses Clauses(Clause(Atom(sbt.plugins.JvmPlugin),Set(Atom(sbt.plugins.IvyPlugin)))
+[debug] Clause(Atom(sbt.ScriptedPlugin),Set(Atom(sbt.plugins.JvmPlugin)))
+[debug] Clause(Atom(sbt.plugins.SbtPlugin),Set(Atom(sbt.ScriptedPlugin)))
+[debug] Clause(Atom(sbt.plugins.SemanticdbPlugin),Set(Atom(sbt.plugins.JvmPlugin)))
+[debug] Clause(Atom(sbt.plugins.JUnitXmlReportPlugin),Set(Atom(sbt.plugins.JvmPlugin)))
+[debug] Clause(Atom(sbt.plugins.MiniDependencyTreePlugin),Set(Atom(sbt.plugins.JvmPlugin)))
+[debug] Clause(Atom(bloop.integrations.sbt.BloopPlugin),Set(Atom(sbt.plugins.JvmPlugin)))
+[debug] Clause(Atom(sbt.plugins.CorePlugin),Set(Atom(sbt.plugins.IvyPlugin)))
+[debug] Clause(Atom(sbt.plugins.IvyPlugin),Set(Atom(sbt.plugins.JvmPlugin)))
+[debug] Clause(Atom(sbt.plugins.JvmPlugin),Set(Atom(sbt.plugins.SemanticdbPlugin)))
+[debug] Clause(Atom(sbt.plugins.JvmPlugin),Set(Atom(sbt.plugins.JUnitXmlReportPlugin)))
+[debug] Clause(Atom(sbt.plugins.CorePlugin),Set(Atom(sbt.plugins.Giter8TemplatePlugin)))
+[debug] Clause(Atom(sbt.plugins.JvmPlugin),Set(Atom(sbt.plugins.MiniDependencyTreePlugin)))
+[debug] Clause(Atom(sbt.plugins.JvmPlugin),Set(Atom(bloop.integrations.sbt.BloopPlugin))))
+[debug]   :: deduced result: Matched(sbt.plugins.CorePlugin,sbt.plugins.Giter8TemplatePlugin,sbt.plugins.IvyPlugin,sbt.plugins.JvmPlugin,bloop.integrations.sbt.BloopPlugin,sbt.plugins.MiniDependencyTreePlugin,sbt.plugins.JUnitXmlReportPlugin,sbt.plugins.SemanticdbPlugin)
+[debug] Plugins.deducer#function took 0.745459 ms
+[info] loading settings for project assignment3 from build.sbt ...
+[debug]         Load.resolveProject(assignment3) took 7.752208ms
+[debug]       Load.loadTransitive: finalizeProject(Project(id assignment3, base: /Users/me/school/epl/cw3/Assn3, plugins: List(<none>))) took 8.968333ms
+[debug] [Loading] Done in /Users/me/school/epl/cw3/Assn3, returning: (assignment3)
+[debug]     Load.loadUnit: loadedProjectsRaw took 27.896542ms
+[debug]     Load.loadUnit: cleanEvalClasses took 0.77575ms
+[debug]   Load.loadUnit(file:/Users/me/school/epl/cw3/Assn3/, ...) took 1349.559875ms
+[debug] Load.apply: load took 1354.734375ms
+[debug] Load.apply: resolveProjects took 0.063333ms
+[debug] Load.apply: finalTransforms took 5.004875ms
+[debug] Load.apply: config.delegates took 0.173667ms
+[debug] Load.apply: Def.make(settings)... took 64.685625ms
+[debug] Load.apply: structureIndex took 11.375167ms
+[debug] Load.apply: mkStreams took 0.001542ms
+[info] set current project to Assignment 3 (in build file:/Users/me/school/epl/cw3/Assn3/)
+[debug] > Exec(sbtPopOnFailure, None, None)
+[debug] > Exec(resumeFromFailure, None, None)
+[debug] > Exec(notifyUsersAboutShell, None, None)
+[debug] > Exec(iflast shell, None, None)
+[debug] > Exec(package, None, None)
+[debug] Evaluating tasks: Compile / package
+[debug] Running task... Cancel: Signal, check cycles: false, forcegc: true
+[info] compiling 6 Scala sources to /Users/me/school/epl/cw3/Assn3/target/scala-2.11/classes ...
+[error] /Users/me/school/epl/cw3/Assn3/src/main/scala/Assignment3/RabbitEDSL.scala:179:18: type mismatch;
+[error]  found   : List[Int => (Int => Assignment3.AnimatedGif.AnimatedGif.Picture)]
+[error]  required: Int => (Int => Assignment3.AnimatedGif.AnimatedGif.Frame)
+[error]     (which expands to)  Int => (Int => List[Assignment3.AnimatedGif.AnimatedGif.Picture])
+[error]             y.map((p:Picture) => (x:Int) => (y:Int) =>
+[error]                  ^
+[error] one error found
