@@ -26,6 +26,7 @@ object Assignment3Standalone {
   }
   // ----------------------------------------------------------------
   // Typechecker
+  //
   def valueTy(v: Value): Type = v match {
     case UnitV => UnitTy
     case IntV(_) => IntTy
@@ -43,66 +44,180 @@ object Assignment3Standalone {
       // Values
       case v: Value => valueTy(v)
       // BEGIN ANSWER
-      case e: Expr => e match
+      case Plus(e1: Expr, e2: Expr) =>
       {
-        case n: IntV  => IntTy
-        case b: BoolV => BoolTy
-        case s: StringV => StringTy
-        case Let(x: Variable, e1: Expr, e2: Expr) => 
-        {
-          ctx + (x -> tyOf(ctx, e1))
-          //-----------
-          tyOf(ctx, e2)
-        }
-        case Lambda(x: Variable, ty: Type, e: Expr) => 
-        {
-          // Adding things into context
-          ctx + (x -> ty)
-          // return the type of ty -> e
-          FunTy(ty, tyOf(ctx, e))
-        }
-        case RecV(f: Variable, x: Variable, tyx: Type, ty: Type, e: Expr)  =>
-        {
-          ctx + (x -> tyx)
-          var t2 = tyOf(ctx, e)
-          ty match
-          {
-            case FunTy(tyx, t2) => 
-            {
-              ctx + (f -> ty)
-              ty
+        assert(tyOf(ctx, e1) == tyOf(ctx, e2))
+        assert(tyOf(ctx, e1) == IntTy)
+        IntTy
+      }
+      case Minus(e1:Expr, e2: Expr) =>
+      {
+        assert(tyOf(ctx, e1) == tyOf(ctx, e2))
+        assert(tyOf(ctx, e1) == IntTy)
+        IntTy
+      }
+      case Eq(e1: Expr, e2:Expr) => BoolTy
+      case IfThenElse(e: Expr, e1: Expr, e2: Expr) =>
+      {
+        assert(tyOf(ctx, e1) == tyOf(ctx, e2))
+        assert(tyOf(ctx, e1) == IntTy)
+        BoolTy
+      }
+
+      case GreaterThan(e1: Expr, e2: Expr) =>
+      {
+        assert(tyOf(ctx, e1) == tyOf(ctx, e2))
+        assert(tyOf(ctx, e1) == IntTy)
+        BoolTy
+      }
+      case LessThan(e1: Expr, e2: Expr) =>
+      {
+        assert(tyOf(ctx, e1) == tyOf(ctx, e2))
+        assert(tyOf(ctx, e1) == IntTy)
+        BoolTy
+      }
+      case Let(x: Variable, e1: Expr, e2: Expr) => 
+      {
+        ctx + (x -> tyOf(ctx, e1))
+        //-----------
+        tyOf(ctx, e2)
+      }
+      case Lambda(x: Variable, ty: Type, e: Expr) => 
+      {
+        // Adding things into context
+        ctx + (x -> ty)
+        // return the type of ty -> e
+        FunTy(ty, tyOf(ctx, e))
+      }
+      case Rec(f: Variable, x: Variable, tyx: Type, ty: Type, e: Expr)  =>
+      {
+        ctx + (x -> tyx)
+        var t2 = tyOf(ctx, e)
+        assert(ty == FunTy(tyx, t2))
+        ctx + (f -> ty)
+        ty
+      }
+      case Seq(e1:Expr, e2:Expr) =>
+      {
+        ???
+      }
+      case Apply(e1: Expr, e2: Expr) =>
+      {
+        var t1 = tyOf(ctx, e1) // t1 -> t2
+        var t2 = 
+        ((ft: Any) => ft match{
+            case SignalTy(FunTy(tx, ty)) => {
+              assert(SignalTy(tx) == tyOf(ctx, e2))
+              SignalTy(ty)
             }
-            case _ => sys.error("Type Mismatch")
           }
-        }
-        case Apply(e1: Expr, e2: Expr) =>
+        )
+        t2(t1)
+
+      }
+      case Over(e1: Expr, e2: Expr) =>
+      {
+        ???
+      }
+      case EmptyList(ty: Type) =>
+      {
+        ty
+      }
+      case Cons(e: Expr, e2: Expr) =>
+      {
+        var t =  tyOf(ctx, e)
+        var lt = tyOf(ctx, e2)
+        assert(lt == ListTy(t))
+        lt
+      }
+      case ListCase(e: Expr, e1: Expr, x: Variable, y: Variable, e2: Expr) =>
+      {
+
+        var t = tyOf(ctx, e) // This should give a ListType
+        var t1 = tyOf(ctx, e1)
+        //TODO:
+        
+        ???
+      }
+      case Pair(e1:Expr, e2:Expr) =>
+      {
+        PairTy(tyOf(ctx, e1), tyOf(ctx, e2))
+      }
+      case Fst(e: Expr) =>
+      {
+        ???
+      }
+      case Snd(e: Expr) =>
+      {
+        ???
+      }
+      case LetFun(f: Variable, x: Variable, ty: Type, e1:Expr, e2:Expr) =>
+      {
+        ctx + (x -> ty)
+        var t2 = tyOf(ctx, e1)
+        ctx + (x -> FunTy(ty, t2))
+        tyOf(ctx, e2)
+      }
+      case LetRec(f, arg, xty, ty, e1, e2) =>
+      {
+        ???
+        // TODO: 
+      }
+      case LetPair(x:Variable, y:Variable, ePair: Expr, eBody: Expr) =>
+      {
+        ???
+        // TODO: 
+      }
+      case Pure(e) => 
+      {
+        var t = tyOf(ctx, e)
+        isSimpleType(t)
+        SignalTy(t)
+      }
+      case Apply(e1:Expr, e2:Expr) =>
+      {
+        //TODO: 
+        ???
+        
+      }
+      case Time => SignalTy(IntTy)
+      case MoveXY(e1: Expr, e2: Expr, e3: Expr) => 
+      {
+        tyOf(ctx, e1) match
         {
-          var t1 = tyOf(ctx, e1)
-          var t2 = tyOf(ctx, e2)
-          t1 match 
-          {
-            case FunTy(t1, t2) => t2
-            case _ => sys.error("Type mismatch")
-          }          
+          case SignalTy(IntTy) => tyOf(ctx, e1)
+          case _ => sys.error("Type Mismatch")
         }
-        case EmptyList(ty: Type) =>
+        tyOf(ctx, e2) match
         {
-          ty
+          case SignalTy(IntTy) => tyOf(ctx, e2)
+          case _ => sys.error("Type Mismatch")
         }
-        case Cons(e: Expr, e2: Expr) =>
+        tyOf(ctx, e3) match
         {
-          var t = tyOf(ctx, e)
-          var lt = tyOf(ctx, e2)
-          lt match 
-          {
-            case ListTy(t) => lt
-            case _         => sys.error("Type mismatch")
-          }
+          case SignalTy(FrameTy) => SignalTy(FrameTy)
+          case _ => sys.error("Type Mismatch")
         }
-        case ListCase(e: Expr, e1: Expr, x: Variable, y: Variable, e2: Expr) =>
+      }
+      case When(e1: Expr, e2: Expr, e3: Expr) =>
+      {
+        tyOf(ctx, e1) match
         {
-          var t = tyOf(ctx, e)
+          case SignalTy(BoolTy) => SignalTy(BoolTy)
+          case _ => sys.error("Type Mismatch")
         }
+        assert(tyOf(ctx, e2) == tyOf(ctx, e3))
+        
+        tyOf(ctx, e2)
+      }
+      case SignalBlock(se: Expr) =>
+      {
+        SignalTy(tyOfSignal(ctx, se))
+      }
+      case Read(e: Expr) =>
+      {
+        assert(tyOf(ctx, e) == StringTy)
+        SignalTy(FrameTy)
       }
 
       case _ => sys.error("todo")
