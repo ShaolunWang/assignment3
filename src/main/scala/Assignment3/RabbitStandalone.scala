@@ -104,16 +104,15 @@ object Assignment3Standalone {
       case Apply(e1: Expr, e2: Expr) =>
       {
         var t1 = tyOf(ctx, e1) // t1 -> t2
-        var t2 = 
-        ((ft: Any) => ft match{
+        var t2 = ((ft: Any) => ft match{
             case SignalTy(FunTy(tx, ty)) => {
               assert(SignalTy(tx) == tyOf(ctx, e2))
               SignalTy(ty)
             }
           }
         )
-        t2(t1)
 
+        t2(t1)
       }
       case Over(e1: Expr, e2: Expr) =>
       {
