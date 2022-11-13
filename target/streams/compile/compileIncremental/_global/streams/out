@@ -1,6 +1,6 @@
 [debug] [zinc] IncrementalCompile -----------
 [debug] IncrementalCompile.incrementalCompile
-[debug] previous = Stamps for: 471 products, 6 sources, 3 libraries
+[debug] previous = Stamps for: 472 products, 6 sources, 3 libraries
 [debug] current source = Set(${BASE}/src/main/scala/Assignment3/RabbitStandalone.scala, ${BASE}/src/main/scala/Assignment3/RabbitEDSL.scala, ${BASE}/src/main/scala/Assignment3/RabbitParser.scala, ${BASE}/src/main/scala/Assignment3/RabbitSyntax.scala, ${BASE}/src/main/scala/Assignment3/FRP.scala, ${BASE}/src/main/scala/Assignment3/AnimatedGif.scala)
 [debug] > initialChanges = InitialChanges(Changes(added = Set(), removed = Set(), changed = Set(), unmodified = ...),Set(),Set(),API Changes: Set())
 [debug] No changes

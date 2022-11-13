@@ -99,7 +99,8 @@ object Assignment3Standalone {
       }
       case Seq(e1:Expr, e2:Expr) =>
       {
-        ???
+        assert(tyOf(ctx, e1) == UnitTy)
+        tyOf(ctx, e2)
       }
       case Apply(e1: Expr, e2: Expr) =>
       {
@@ -116,11 +117,14 @@ object Assignment3Standalone {
       }
       case Over(e1: Expr, e2: Expr) =>
       {
-        ???
+        assert(tyOf(ctx, e1) == SignalTy(FrameTy))
+        var t = tyOf(ctx, e2)
+        assert(t == SignalTy(FrameTy))
+        t
       }
       case EmptyList(ty: Type) =>
       {
-        ty
+        ListTy(ty)
       }
       case Cons(e: Expr, e2: Expr) =>
       {
@@ -131,12 +135,20 @@ object Assignment3Standalone {
       }
       case ListCase(e: Expr, e1: Expr, x: Variable, y: Variable, e2: Expr) =>
       {
+        // Helper function that unwraps ListTy(t)
+        var getTy = 
+          ((lt : Type) => lt match {
+            case ListTy(ty) => ty
+            case _ => sys.error("Type Mismatch")
+          })
 
-        var t = tyOf(ctx, e) // This should give a ListType
-        var t1 = tyOf(ctx, e1)
-        //TODO:
-        
-        ???
+        var lt = tyOf(ctx, e)
+        var t = getTy(lt)
+
+        ctx + (x -> t)
+        ctx + (y -> lt)
+
+        tyOf(ctx, e2)
       }
       case Pair(e1:Expr, e2:Expr) =>
       {
@@ -144,10 +156,12 @@ object Assignment3Standalone {
       }
       case Fst(e: Expr) =>
       {
+        // TODO: 
         ???
       }
       case Snd(e: Expr) =>
       {
+        // TODO: 
         ???
       }
       case LetFun(f: Variable, x: Variable, ty: Type, e1:Expr, e2:Expr) =>
