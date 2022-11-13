@@ -156,13 +156,23 @@ object Assignment3Standalone {
       }
       case Fst(e: Expr) =>
       {
-        // TODO: 
-        ???
+        var t = tyOf(ctx, e)
+        var getTy = 
+          ((lt : Type) => lt match {
+            case PairTy(t1, t2) => t1
+            case _ => sys.error("Type Mismatch")
+          })
+        getTy(t)
       }
       case Snd(e: Expr) =>
       {
-        // TODO: 
-        ???
+        var t = tyOf(ctx, e)
+        var getTy = 
+          ((lt : Type) => lt match {
+            case PairTy(t1, t2) => t2
+            case _ => sys.error("Type Mismatch")
+          })
+        getTy(t)
       }
       case LetFun(f: Variable, x: Variable, ty: Type, e1:Expr, e2:Expr) =>
       {
@@ -171,15 +181,28 @@ object Assignment3Standalone {
         ctx + (x -> FunTy(ty, t2))
         tyOf(ctx, e2)
       }
-      case LetRec(f, arg, xty, ty, e1, e2) =>
+      case LetRec(f: Variable, x: Variable, xty:Type, ty:Type, e1: Expr, e2: Expr) =>
       {
-        ???
-        // TODO: 
+        // Helper function that gives a pair of types
+        var getTy = 
+          ((lt : Type) => lt match {
+            case FunTy(t1, t2) => (t1, t2)
+            case _ => sys.error("Type Mismatch")
+          })
+        var pf = getTy(ty)
+        ctx + (x -> pf._1)
+        assert(tyOf(ctx, e1) == pf._2)
+        tyOf(ctx, e2)
       }
       case LetPair(x:Variable, y:Variable, ePair: Expr, eBody: Expr) =>
       {
-        ???
-        // TODO: 
+        var getTy = 
+          ((t : Type) => t match {
+            case PairTy(t1, t2) => (t1, t2)
+            case _ => sys.error("Type Mismatch")
+          })
+        var p = getTy(tyOf(ctx, ePair))
+        ctx + (x -> p._1)
       }
       case Pure(e) => 
       {
