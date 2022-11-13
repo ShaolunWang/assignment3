@@ -1,3 +1,9 @@
-[error] IO error while decoding /Users/me/school/epl/cw3/Assn3/src/main/scala/Assignment3/RabbitStandalone.scala with UTF-8
-[error] Please try specifying another one using the -encoding option
-[error] one error found
+[error] /Users/me/school/epl/cw3/Assn3/src/main/scala/Assignment3/RabbitStandalone.scala:510:23: wrong number of arguments for pattern Assignment3.RabbitSyntax.Syntax.SignalBlock(se: Assignment3.RabbitSyntax.Syntax.Expr)
+[error]       case SignalBlock() =>
+[error]                       ^
+[error] /Users/me/school/epl/cw3/Assn3/src/main/scala/Assignment3/RabbitStandalone.scala:510:26: type mismatch;
+[error]  found   : Unit
+[error]  required: Assignment3.RabbitSyntax.Syntax.Expr
+[error]       case SignalBlock() =>
+[error]                          ^
+[error] two errors found
