@@ -445,6 +445,24 @@ object Assignment3Standalone {
       case Plus(t1, t2)  => Plus(subst(t1, e2, x), subst(t2, e2, x))
       case Minus(t1, t2) => Minus(subst(t1, e2, x), subst(t2, e2, x))
       case Times(t1, t2) => Times(subst(t1, e2, x), subst(t2, e2, x))
+      case Div(t1, t2)  => Div(subst(t1, e2, x), subst(t2, e2, x))
+      case Eq(t1, t2) => Eq(subst(t1, e2, x), subst(t2, e2, x))
+      case GreaterThan(t1, t2) => GreaterThan(subst(t1, e2, x), subst(t2, e2, x))
+      case LessThan(t1, t2) => LessThan(subst(t1, e2, x), subst(t2, e2, x))
+      case Lambda(y, ty, t1) => 
+      {
+        val z = Gensym.gensym(y)
+        val fresh_t1 = swap(t1, y, z)
+        Lambda(y, ty, subst(t1, e2, x))
+      }
+      case Rec(f: Variable, y: Variable, tyx: Type, ty: Type, t1: Expr) =>
+      {
+        // (rec f(y:τ):τ′.e0)[e/x] = rec g(z:τ):τ′.e0(y↔z)(f↔g)[e/x]
+        val g = Gensym.gensym(f)
+        val z = Gensym.gensym(y)
+        val fresh_t1 = swap(swap(t1, y, z), f, g)
+        Rec(g, z, tyx, ty, subst(fresh_t1, e2, x))
+      }
       case IfThenElse(t, t1, t2) =>
         IfThenElse(subst(t, e2, x), subst(t1, e2, x), subst(t1, e2, x))
       case Var(y) =>
@@ -527,11 +545,25 @@ object Assignment3Standalone {
       // Signal values do not appear before evaluation happens so do not need to be desugared
       case v => v
     }
-
     e match {
       case v: Value => desugarVal(v)
-      // BEGIN ANSWER
-      case _ => sys.error("todo")
+      case LetFun(f: Variable, arg: Variable, ty: Type, e1:Expr, e2:Expr) =>
+          Let(f, Lambda(arg, ty, e1), e2)
+      case LetRec(f: Variable, arg: Variable, xty: Type, ty: Type, e1:Expr, e2:Expr) =>
+          Let(f, Rec(f, arg, xty, ty, e1), e2)
+      case LetPair(x: Variable, y: Variable, e1: Expr, e2: Expr) =>
+      {
+        val p = Gensym.gensym(x + " " + y)
+        val t1 = Fst(Var(p))
+        val t2 = Snd(Var(p))
+        Let(p, e1, subst(subst(e2, t1, x), t2, y))
+      }
+      case Apply(e1: Expr, e2: Expr) => 
+      {
+        var x = "4B33D660FED11FF6BF800293B0ADA1A8"
+        Let(x, e1, e2)
+      }
+      case _ => sys.error("Wrong Desugaring!!!!")
       // END ANSWER
     }
   }
@@ -541,8 +573,8 @@ object Assignment3Standalone {
   def desugarBlock(e: Expr): Expr = {
     e match {
       case v: Value => Pure(desugar(v))
-
       // BEGIN ANSWER
+      // TODO:
       case _ => sys.error("todo")
       // END ANSWER
     }
