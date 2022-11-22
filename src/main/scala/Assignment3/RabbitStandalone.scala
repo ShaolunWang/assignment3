@@ -49,6 +49,9 @@ object Assignment3Standalone {
       // Values
       case v: Value => valueTy(v)
       // BEGIN ANSWER
+      case Var(x: Variable) => {
+        ctx(x)
+      }
       case Plus(e1: Expr, e2: Expr) => {
         assert(tyOf(ctx, e1) == tyOf(ctx, e2))
         assert(tyOf(ctx, e1) == IntTy)
@@ -59,11 +62,38 @@ object Assignment3Standalone {
         assert(tyOf(ctx, e1) == IntTy)
         IntTy
       }
-      case Eq(e1: Expr, e2: Expr) => BoolTy
-      case IfThenElse(e: Expr, e1: Expr, e2: Expr) => {
+      case Times(e1: Expr, e2: Expr) => {
+        assert(tyOf(ctx, e1) == tyOf(ctx, e2))
+        assert(tyOf(ctx, e1) == IntTy)
+        IntTy
+      }
+      case Div(e1: Expr, e2: Expr) => {
+        assert(tyOf(ctx, e1) == tyOf(ctx, e2))
+        assert(tyOf(ctx, e1) == IntTy)
+        IntTy
+      }
+      case App(e1: Expr, e2: Expr) => {
+        var getTy = (
+            (lt: Type) =>
+              lt match {
+                case FunTy(t1, t2) => (t1, t2)
+                case _             => sys.error("Type Mismatch: App")
+              }
+        )
+        var p = getTy(tyOf(ctx, e1))
+        assert(p._1 == tyOf(ctx, e2))
+        p._2
+      }
+
+      case Eq(e1: Expr, e2: Expr) => {
         assert(tyOf(ctx, e1) == tyOf(ctx, e2))
         assert(tyOf(ctx, e1) == IntTy)
         BoolTy
+      }
+      case IfThenElse(e: Expr, e1: Expr, e2: Expr) => {
+        assert(tyOf(ctx, e1) == tyOf(ctx, e2))
+        assert(tyOf(ctx, e) == BoolTy)
+        tyOf(ctx, e1)
       }
 
       case GreaterThan(e1: Expr, e2: Expr) => {
@@ -77,22 +107,23 @@ object Assignment3Standalone {
         BoolTy
       }
       case Let(x: Variable, e1: Expr, e2: Expr) => {
-        ctx + (x -> tyOf(ctx, e1))
+        var t = tyOf(ctx, e1)
+        var new_ctx = ctx + (x -> t)
         // -----------
-        tyOf(ctx, e2)
+        tyOf(new_ctx, e2)
       }
       case Lambda(x: Variable, ty: Type, e: Expr) => {
         // Adding things into context
-        ctx + (x -> ty)
+        var new_ctx = ctx + (x -> ty)
         // return the type of ty -> e
-        FunTy(ty, tyOf(ctx, e))
+        FunTy(ty, tyOf(new_ctx, e))
       }
       case Rec(f: Variable, x: Variable, tyx: Type, ty: Type, e: Expr) => {
-        ctx + (x -> tyx)
-        var t2 = tyOf(ctx, e)
-        assert(ty == FunTy(tyx, t2))
-        ctx + (f -> ty)
-        ty
+        var new_ctx = ctx + (f -> FunTy(tyx, ty))
+        new_ctx = new_ctx + (x -> tyx)
+        var t2 = tyOf(new_ctx, e)
+        assert(t2 == ty)
+        FunTy(tyx, ty)
       }
       case Seq(e1: Expr, e2: Expr) => {
         assert(tyOf(ctx, e1) == UnitTy)
@@ -120,17 +151,17 @@ object Assignment3Standalone {
               (lt: Type) =>
                 lt match {
                   case ListTy(ty) => ty
-                  case _          => sys.error("Type Mismatch")
+                  case _          => sys.error("Type Mismatch: ListCase")
                 }
           )
 
         var lt = tyOf(ctx, e)
         var t = getTy(lt)
 
-        ctx + (x -> t)
-        ctx + (y -> lt)
+        var new_ctx = ctx + (x -> t)
+        new_ctx = new_ctx + (y -> lt)
 
-        tyOf(ctx, e2)
+        tyOf(new_ctx, e2)
       }
       case Pair(e1: Expr, e2: Expr) => {
         PairTy(tyOf(ctx, e1), tyOf(ctx, e2))
@@ -161,10 +192,10 @@ object Assignment3Standalone {
         getTy(t)
       }
       case LetFun(f: Variable, x: Variable, ty: Type, e1: Expr, e2: Expr) => {
-        ctx + (x -> ty)
-        var t2 = tyOf(ctx, e1)
-        ctx + (x -> FunTy(ty, t2))
-        tyOf(ctx, e2)
+        var new_ctx = ctx + (x -> ty)
+        var t2 = tyOf(new_ctx, e1)
+        new_ctx = new_ctx + (f -> FunTy(ty, t2))
+        tyOf(new_ctx, e2)
       }
       case LetRec(
             f: Variable,
@@ -174,19 +205,11 @@ object Assignment3Standalone {
             e1: Expr,
             e2: Expr
           ) => {
-        // Helper function that gives a pair of types
-        var getTy =
-          (
-              (lt: Type) =>
-                lt match {
-                  case FunTy(t1, t2) => (t1, t2)
-                  case _             => sys.error("Type Mismatch")
-                }
-          )
-        var pf = getTy(ty)
-        ctx + (x -> pf._1)
-        assert(tyOf(ctx, e1) == pf._2)
-        tyOf(ctx, e2)
+        var new_ctx = ctx + (f -> FunTy(xty, ty))
+        new_ctx = new_ctx + (x -> xty)
+        assert(tyOf(new_ctx, e1) == ty)
+        new_ctx = new_ctx + (f -> FunTy(xty, tyOf(new_ctx, e1)))
+        tyOf(new_ctx, e2)
       }
       case LetPair(x: Variable, y: Variable, ePair: Expr, eBody: Expr) => {
         var getTy =
@@ -194,13 +217,13 @@ object Assignment3Standalone {
               (t: Type) =>
                 t match {
                   case PairTy(t1, t2) => (t1, t2)
-                  case _              => sys.error("Type Mismatch")
+                  case _              => sys.error("Type Mismatch: LetPair")
                 }
           )
         var p = getTy(tyOf(ctx, ePair))
-        ctx + (x -> p._1)
-        ctx + (y -> p._1)
-        tyOf(ctx, eBody)
+        var new_ctx = ctx + (x -> p._1)
+        new_ctx = new_ctx + (y -> p._1)
+        tyOf(new_ctx, eBody)
       }
       case Blank => SignalTy(FrameTy)
       case Pure(e: Expr) => {
@@ -215,26 +238,26 @@ object Assignment3Standalone {
               (t: Type) =>
                 t match {
                   case SignalTy(FunTy(t1, t2)) => (t1, t2)
-                  case _                       => sys.error("Type Mismatch")
+                  case _ => sys.error("Type Mismatch: Apply")
                 }
           )
         var p = getTy(tyOf(ctx, e1))
 
         var t = tyOf(ctx, e2)
-        assert(t == p._1)
-        p._2
+        assert(t == SignalTy(p._1))
+        SignalTy(p._2)
       }
       case MoveXY(e1: Expr, e2: Expr, e3: Expr) => {
         assert(SignalTy(IntTy) == tyOf(ctx, e1))
-        assert(SignalTy(FrameTy) == tyOf(ctx, e2))
+        assert(SignalTy(IntTy) == tyOf(ctx, e2))
         assert(SignalTy(FrameTy) == tyOf(ctx, e3))
 
-        SignalTy(tyOf(ctx, e3))
+        SignalTy(FrameTy)
       }
       case When(e1: Expr, e2: Expr, e3: Expr) => {
         assert(tyOf(ctx, e1) == tyOf(ctx, e1))
         assert(tyOf(ctx, e2) == tyOf(ctx, e3))
-        tyOf(ctx, e2)
+        SignalTy(tyOf(ctx, e2))
       }
       case SignalBlock(se: Expr) => {
         SignalTy(tyOfSignal(ctx, se))
@@ -243,108 +266,120 @@ object Assignment3Standalone {
         assert(tyOf(ctx, e) == StringTy)
         SignalTy(FrameTy)
       }
-      case _ => sys.error("Type not there :/ ")
+      case _ => sys.error("???" + e.toString())
       // END ANSWER
     }
   }
 
   /** ************** Exercise 3 *
     */
-  def unwrapSignal(ctx: Env[Type], e: Expr): Type =
-    tyOfSignal(ctx, e) match {
-      case SignalTy(t) => t
-      case _           => sys.error("Type Mismatch")
-    }
 
   def tyOfSignal(ctx: Env[Type], e: Expr): Type = {
 
     e match {
       // Values
-      case v: Value => valueTy(v)
-      case SignalBlock(Plus(e1: Expr, e2: Expr)) => {
-        assert(unwrapSignal(ctx, e1) == unwrapSignal(ctx, e2))
+      case v: Value          => valueTy(v)
+      case SignalBlock(Time) => IntTy
+      case Var(x: Variable) => {
+        var t = ctx(x)
+        assert(isSimpleType(t))
+        t
+      }
+      case Plus(e1: Expr, e2: Expr) => {
+        assert(tyOfSignal(ctx, e1) == tyOfSignal(ctx, e2))
+        assert(tyOfSignal(ctx, e1) == IntTy)
+        IntTy
+      }
+      case Minus(e1: Expr, e2: Expr) => {
+        assert(tyOfSignal(ctx, e1) == tyOfSignal(ctx, e2))
+        assert(tyOfSignal(ctx, e1) == IntTy)
+        IntTy
+      }
+      case Times(e1: Expr, e2: Expr) => {
+        assert(tyOfSignal(ctx, e1) == tyOfSignal(ctx, e2))
+        assert(tyOfSignal(ctx, e1) == IntTy)
         IntTy
       }
 
-      case SignalBlock(Minus(e1: Expr, e2: Expr)) => {
-        assert(unwrapSignal(ctx, e1) == unwrapSignal(ctx, e2))
+      case Div(e1: Expr, e2: Expr) => {
+        assert(tyOfSignal(ctx, e1) == tyOfSignal(ctx, e2))
+        assert(tyOfSignal(ctx, e1) == IntTy)
         IntTy
       }
-      case SignalBlock(Times(e1: Expr, e2: Expr)) => {
-        assert(unwrapSignal(ctx, e1) == unwrapSignal(ctx, e2))
-        IntTy
-      }
-      case SignalBlock(Div(e1: Expr, e2: Expr)) => {
-        assert(unwrapSignal(ctx, e1) == unwrapSignal(ctx, e2))
-        IntTy
-      }
-      case SignalBlock(Eq(e1: Expr, e2: Expr)) => {
-        assert(unwrapSignal(ctx, e1) == unwrapSignal(ctx, e2))
+      case Eq(e1: Expr, e2: Expr) => {
+        assert(tyOfSignal(ctx, e1) == tyOfSignal(ctx, e2))
         assert(
-          (unwrapSignal(ctx, e1) == IntTy) || (unwrapSignal(ctx, e1) == BoolTy)
+          (tyOfSignal(ctx, e1) == IntTy) || (tyOfSignal(ctx, e1) == BoolTy)
         )
         BoolTy
       }
-      case SignalBlock(LessThan(e1: Expr, e2: Expr)) => {
-        assert(unwrapSignal(ctx, e1) == unwrapSignal(ctx, e2))
-        assert(unwrapSignal(ctx, e1) == IntTy)
+      case LessThan(e1: Expr, e2: Expr) => {
+        assert(tyOfSignal(ctx, e1) == tyOfSignal(ctx, e2))
+        assert(tyOfSignal(ctx, e1) == IntTy)
         BoolTy
       }
-      case SignalBlock(GreaterThan(e1: Expr, e2: Expr)) => {
-        assert(unwrapSignal(ctx, e1) == unwrapSignal(ctx, e2))
-        assert(unwrapSignal(ctx, e1) == IntTy)
+
+      case GreaterThan(e1: Expr, e2: Expr) => {
+        assert(tyOfSignal(ctx, e1) == tyOfSignal(ctx, e2))
+        assert(tyOfSignal(ctx, e1) == IntTy)
         BoolTy
       }
-      case SignalBlock(IfThenElse(e1: Expr, e2: Expr, e3: Expr)) => {
-        var t1 = unwrapSignal(ctx, e1)
-        var t2 = unwrapSignal(ctx, e2)
-        var t3 = unwrapSignal(ctx, e3)
+
+      case IfThenElse(e1: Expr, e2: Expr, e3: Expr) => {
+        var t1 = tyOfSignal(ctx, e1)
+        var t2 = tyOfSignal(ctx, e2)
+        var t3 = tyOfSignal(ctx, e3)
         assert(t1 == IntTy)
         assert(t2 == t3)
         t2
 
       }
-      case SignalBlock(Apply(e1: Expr, e2: Expr)) => {
-        var unwrapFunc = (
-            (e: Expr) =>
-              tyOfSignal(ctx, e) match {
-                case SignalTy(FunTy(t1, t2)) => (t1, t2)
-                case _                       => sys.error("Type Mismatch")
-              }
-        )
-        var f = unwrapFunc(e1)
-        assert(tyOfSignal(ctx, e2) == f._1)
-        f._2
+      case App(e1: Expr, e2: Expr) => {
+        var getTy =
+          (
+              (lt: Type) =>
+                lt match {
+                  case SignalTy(FunTy(t1, t2)) => (t1, t2)
+                  case _             => sys.error("Type Mismatch App: " + lt.toString())
+                }
+          )
+
+        var t = tyOfSignal(ctx, Escape(Pure((e1))))
+        var p = getTy(t)
+        assert(p._1 == tyOfSignal(ctx, e2))
+        p._2
+
       }
       case Blank => FrameTy
       case Time  => IntTy
       case MoveXY(e1: Expr, e2: Expr, e3: Expr) => {
-        var t1 = unwrapSignal(ctx, e1)
-        var t2 = unwrapSignal(ctx, e2)
-        var t3 = unwrapSignal(ctx, e3)
+        var t1 = tyOfSignal(ctx, e1)
+        var t2 = tyOfSignal(ctx, e2)
+        var t3 = tyOfSignal(ctx, e3)
         assert(t1 == IntTy)
         assert(t2 == IntTy)
         assert(t3 == FrameTy)
         FrameTy
       }
       case When(e1: Expr, e2: Expr, e3: Expr) => {
-        assert(unwrapSignal(ctx, e1) == BoolTy)
-        var t2 = unwrapSignal(ctx, e2)
-        var t3 = unwrapSignal(ctx, e3)
+        assert(tyOfSignal(ctx, e1) == BoolTy)
+        var t2 = tyOfSignal(ctx, e2)
+        var t3 = tyOfSignal(ctx, e3)
         assert(t2 == t3)
         t2
       }
       case Read(e: Expr) => {
-        var t1 = unwrapSignal(ctx, e)
+        var t1 = tyOfSignal(ctx, e)
         assert(t1 == StringTy)
         FrameTy
       }
       case Over(e1: Expr, e2: Expr) => {
-        assert(unwrapSignal(ctx, e1) == unwrapSignal(ctx, e2))
+        assert(tyOfSignal(ctx, e1) == tyOfSignal(ctx, e2))
+        assert(tyOfSignal(ctx, e1) == FrameTy)
         FrameTy
       }
       case Escape(e: Expr) => {
-        var t = unwrapSignal(ctx, e)
+        var t = tyOf(ctx, e)
         t
       }
     }
@@ -445,18 +480,17 @@ object Assignment3Standalone {
       case Plus(t1, t2)  => Plus(subst(t1, e2, x), subst(t2, e2, x))
       case Minus(t1, t2) => Minus(subst(t1, e2, x), subst(t2, e2, x))
       case Times(t1, t2) => Times(subst(t1, e2, x), subst(t2, e2, x))
-      case Div(t1, t2)  => Div(subst(t1, e2, x), subst(t2, e2, x))
-      case Eq(t1, t2) => Eq(subst(t1, e2, x), subst(t2, e2, x))
-      case GreaterThan(t1, t2) => GreaterThan(subst(t1, e2, x), subst(t2, e2, x))
+      case Div(t1, t2)   => Div(subst(t1, e2, x), subst(t2, e2, x))
+      case Eq(t1, t2)    => Eq(subst(t1, e2, x), subst(t2, e2, x))
+      case GreaterThan(t1, t2) =>
+        GreaterThan(subst(t1, e2, x), subst(t2, e2, x))
       case LessThan(t1, t2) => LessThan(subst(t1, e2, x), subst(t2, e2, x))
-      case Lambda(y, ty, t1) => 
-      {
+      case Lambda(y, ty, t1) => {
         val z = Gensym.gensym(y)
         val fresh_t1 = swap(t1, y, z)
         Lambda(y, ty, subst(t1, e2, x))
       }
-      case Rec(f: Variable, y: Variable, tyx: Type, ty: Type, t1: Expr) =>
-      {
+      case Rec(f: Variable, y: Variable, tyx: Type, ty: Type, t1: Expr) => {
         // (rec f(y:τ):τ′.e0)[e/x] = rec g(z:τ):τ′.e0(y↔z)(f↔g)[e/x]
         val g = Gensym.gensym(f)
         val z = Gensym.gensym(y)
@@ -521,11 +555,11 @@ object Assignment3Standalone {
       case Over(t1: Expr, t2: Expr) => Over(subst(t1, e2, x), subst(t2, e2, x))
       case MoveXY(t1: Expr, t2: Expr, t3: Expr) =>
         MoveXY(subst(t1, e2, x), subst(t2, e2, x), subst(t3, e2, x))
-      case When(t1: Expr, t2: Expr, t3: Expr) => 
-          When(subst(t1, e2, x), subst(t2, e2, x), subst(t3, e2, x))
+      case When(t1: Expr, t2: Expr, t3: Expr) =>
+        When(subst(t1, e2, x), subst(t2, e2, x), subst(t3, e2, x))
       case SignalBlock(t1) => subst(t1, e2, x)
-    // Signals
-      
+      // Signals
+
       case _ => sys.error("Wrong Substitution!!")
     }
 
@@ -547,19 +581,24 @@ object Assignment3Standalone {
     }
     e match {
       case v: Value => desugarVal(v)
-      case LetFun(f: Variable, arg: Variable, ty: Type, e1:Expr, e2:Expr) =>
-          Let(f, Lambda(arg, ty, e1), e2)
-      case LetRec(f: Variable, arg: Variable, xty: Type, ty: Type, e1:Expr, e2:Expr) =>
-          Let(f, Rec(f, arg, xty, ty, e1), e2)
-      case LetPair(x: Variable, y: Variable, e1: Expr, e2: Expr) =>
-      {
+      case LetFun(f: Variable, arg: Variable, ty: Type, e1: Expr, e2: Expr) =>
+        Let(f, Lambda(arg, ty, e1), e2)
+      case LetRec(
+            f: Variable,
+            arg: Variable,
+            xty: Type,
+            ty: Type,
+            e1: Expr,
+            e2: Expr
+          ) =>
+        Let(f, Rec(f, arg, xty, ty, e1), e2)
+      case LetPair(x: Variable, y: Variable, e1: Expr, e2: Expr) => {
         val p = Gensym.gensym(x + " " + y)
         val t1 = Fst(Var(p))
         val t2 = Snd(Var(p))
         Let(p, e1, subst(subst(e2, t1, x), t2, y))
       }
-      case Apply(e1: Expr, e2: Expr) => 
-      {
+      case Apply(e1: Expr, e2: Expr) => {
         var x = "4B33D660FED11FF6BF800293B0ADA1A8"
         Let(x, e1, e2)
       }
@@ -574,7 +613,115 @@ object Assignment3Standalone {
     e match {
       case v: Value => Pure(desugar(v))
       // BEGIN ANSWER
-      // TODO:
+      case SignalBlock(se) => desugarBlock(se)
+      case Apply(SignalBlock(e1), SignalBlock(e2)) =>
+        Apply(desugarBlock(e1), desugarBlock(e2))
+      case IfThenElse(SignalBlock(e), SignalBlock(e1), SignalBlock(e2)) =>
+        When(desugarBlock(e), desugarBlock(e1), desugarBlock(e2))
+      case Plus(SignalBlock(e1), SignalBlock(e2)) => {
+        // hexdump -vn16 -e'4/4 "%08X" 1 "\n"' /dev/urandom
+        var x = "4B33D660FED11FF6BF800293B0ADA1A8"
+        var y = "272F0A0C4677340CF681919024D2DAA4"
+        x = Gensym.gensym(x)
+        y = Gensym.gensym(y)
+        Apply(
+          Apply(
+            Pure(Lambda(x, IntTy, Lambda(y, IntTy, Plus(Var(x), Var(y))))),
+            desugarBlock(e1)
+          ),
+          desugarBlock(e2)
+        )
+      }
+      case Minus(SignalBlock(e1), SignalBlock(e2)) => {
+        // hexdump -vn16 -e'4/4 "%08X" 1 "\n"' /dev/urandom
+        var x = "4B33D660FED11FF6BF800293B0ADA1A8"
+        var y = "272F0A0C4677340CF681919024D2DAA4"
+        x = Gensym.gensym(x)
+        y = Gensym.gensym(y)
+        Apply(
+          Apply(
+            Pure(Lambda(x, IntTy, Lambda(y, IntTy, Minus(Var(x), Var(y))))),
+            desugarBlock(e1)
+          ),
+          desugarBlock(e2)
+        )
+      }
+      case Times(SignalBlock(e1), SignalBlock(e2)) => {
+        // hexdump -vn16 -e'4/4 "%08X" 1 "\n"' /dev/urandom
+        var x = "4B33D660FED11FF6BF800293B0ADA1A8"
+        var y = "272F0A0C4677340CF681919024D2DAA4"
+        x = Gensym.gensym(x)
+        y = Gensym.gensym(y)
+        Apply(
+          Apply(
+            Pure(Lambda(x, IntTy, Lambda(y, IntTy, Times(Var(x), Var(y))))),
+            desugarBlock(e1)
+          ),
+          desugarBlock(e2)
+        )
+      }
+      case Div(SignalBlock(e1), SignalBlock(e2)) => {
+        // hexdump -vn16 -e'4/4 "%08X" 1 "\n"' /dev/urandom
+        var x = "4B33D660FED11FF6BF800293B0ADA1A8"
+        var y = "272F0A0C4677340CF681919024D2DAA4"
+        x = Gensym.gensym(x)
+        y = Gensym.gensym(y)
+        Apply(
+          Apply(
+            Pure(Lambda(x, IntTy, Lambda(y, IntTy, Div(Var(x), Var(y))))),
+            desugarBlock(e1)
+          ),
+          desugarBlock(e2)
+        )
+      }
+      case Eq(SignalBlock(e1), SignalBlock(e2)) => {
+        // hexdump -vn16 -e'4/4 "%08X" 1 "\n"' /dev/urandom
+        var x = "4B33D660FED11FF6BF800293B0ADA1A8"
+        var y = "272F0A0C4677340CF681919024D2DAA4"
+        x = Gensym.gensym(x)
+        y = Gensym.gensym(y)
+        Apply(
+          Apply(
+            Pure(Lambda(x, IntTy, Lambda(y, IntTy, Eq(Var(x), Var(y))))),
+            desugarBlock(e1)
+          ),
+          desugarBlock(e2)
+        )
+      }
+      case GreaterThan(SignalBlock(e1), SignalBlock(e2)) => {
+        // hexdump -vn16 -e'4/4 "%08X" 1 "\n"' /dev/urandom
+        var x = "4B33D660FED11FF6BF800293B0ADA1A8"
+        var y = "272F0A0C4677340CF681919024D2DAA4"
+        x = Gensym.gensym(x)
+        y = Gensym.gensym(y)
+        Apply(
+          Apply(
+            Pure(
+              Lambda(x, IntTy, Lambda(y, IntTy, GreaterThan(Var(x), Var(y))))
+            ),
+            desugarBlock(e1)
+          ),
+          desugarBlock(e2)
+        )
+      }
+      case LessThan(SignalBlock(e1), SignalBlock(e2)) => {
+        // hexdump -vn16 -e'4/4 "%08X" 1 "\n"' /dev/urandom
+        var x = "4B33D660FED11FF6BF800293B0ADA1A8"
+        var y = "272F0A0C4677340CF681919024D2DAA4"
+        x = Gensym.gensym(x)
+        y = Gensym.gensym(y)
+        Apply(
+          Apply(
+            Pure(Lambda(x, IntTy, Lambda(y, IntTy, LessThan(Var(x), Var(y))))),
+            desugarBlock(e1)
+          ),
+          desugarBlock(e2)
+        )
+      }
+      case TimeV   => TimeV
+      case Read(e) => Read(desugar(e))
+      case MoveXY(x, y, a) =>
+        MoveXY(desugarBlock(x), desugarBlock(y), desugarBlock(a))
       case _ => sys.error("todo")
       // END ANSWER
     }

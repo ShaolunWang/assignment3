@@ -136,7 +136,7 @@ object Assignment3Embedded {
 
     def read(name: String): RabbitAnimation[Frame] = 
     {
-      pure(List(Picture(name, 0, 0)))     
+      pure(List(Picture(name)))     
     }
     def blank(): RabbitAnimation[Frame] = 
       {

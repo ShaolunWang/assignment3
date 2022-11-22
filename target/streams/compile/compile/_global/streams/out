@@ -1,5 +1,4 @@
-[error] /Users/me/school/epl/cw3/Assn3/src/main/scala/Assignment3/RabbitStandalone.scala:564:12: not enough arguments for method apply: (x: Assignment3.RabbitSyntax.Syntax.Variable, e1: Assignment3.RabbitSyntax.Syntax.Expr, e2: Assignment3.RabbitSyntax.Syntax.Expr)Assignment3.RabbitSyntax.Syntax.Let in object Let.
-[error] Unspecified value parameter e2.
-[error]         Let(x, e1 e2)
-[error]            ^
+[error] /Users/me/school/epl/cw3/Assn3/src/main/scala/Assignment3/RabbitStandalone.scala:378:24: unclosed character literal
+[error]         sys.error('here')
+[error]                        ^
 [error] one error found
