@@ -251,7 +251,6 @@ object Assignment3Standalone {
         assert(SignalTy(IntTy) == tyOf(ctx, e1))
         assert(SignalTy(IntTy) == tyOf(ctx, e2))
         assert(SignalTy(FrameTy) == tyOf(ctx, e3))
-
         SignalTy(FrameTy)
       }
       case When(e1: Expr, e2: Expr, e3: Expr) => {
@@ -339,8 +338,8 @@ object Assignment3Standalone {
           (
               (lt: Type) =>
                 lt match {
-                  case SignalTy(FunTy(t1, t2)) => (t1, t2)
-                  case _             => sys.error("Type Mismatch App: " + lt.toString())
+                  case FunTy(t1, t2) => (t1, t2)
+                  case _ => sys.error("Type Mismatch App: " + lt.toString())
                 }
           )
 
@@ -380,7 +379,15 @@ object Assignment3Standalone {
       }
       case Escape(e: Expr) => {
         var t = tyOf(ctx, e)
-        t
+        var getTy =
+          (
+              (lt: Type) =>
+                lt match {
+                  case SignalTy(t1) => t1
+                  case _ => sys.error("Type Mismatch Escape: " + lt.toString())
+                }
+          )
+        getTy(t)
       }
     }
   }
@@ -583,6 +590,7 @@ object Assignment3Standalone {
       case v: Value => desugarVal(v)
       case LetFun(f: Variable, arg: Variable, ty: Type, e1: Expr, e2: Expr) =>
         Let(f, Lambda(arg, ty, e1), e2)
+
       case LetRec(
             f: Variable,
             arg: Variable,
@@ -598,11 +606,11 @@ object Assignment3Standalone {
         val t2 = Snd(Var(p))
         Let(p, e1, subst(subst(e2, t1, x), t2, y))
       }
-      case Apply(e1: Expr, e2: Expr) => {
+      case Seq(e1: Expr, e2: Expr) => {
         var x = "4B33D660FED11FF6BF800293B0ADA1A8"
         Let(x, e1, e2)
       }
-      case _ => sys.error("Wrong Desugaring!!!!")
+      case se => desugarBlock(se)
       // END ANSWER
     }
   }
@@ -613,12 +621,13 @@ object Assignment3Standalone {
     e match {
       case v: Value => Pure(desugar(v))
       // BEGIN ANSWER
-      case SignalBlock(se) => desugarBlock(se)
-      case Apply(SignalBlock(e1), SignalBlock(e2)) =>
+      case SignalBlock(se: Expr) => desugarBlock(se)
+      case App(e1: Expr, e2: Expr) =>
         Apply(desugarBlock(e1), desugarBlock(e2))
-      case IfThenElse(SignalBlock(e), SignalBlock(e1), SignalBlock(e2)) =>
+      case IfThenElse(e: Expr, e1: Expr, e2: Expr) =>
         When(desugarBlock(e), desugarBlock(e1), desugarBlock(e2))
-      case Plus(SignalBlock(e1), SignalBlock(e2)) => {
+      case Over(e1: Expr, e2: Expr) => Over(desugarBlock(e1), desugarBlock(e2))
+      case Plus(e1: Expr, e2: Expr) => {
         // hexdump -vn16 -e'4/4 "%08X" 1 "\n"' /dev/urandom
         var x = "4B33D660FED11FF6BF800293B0ADA1A8"
         var y = "272F0A0C4677340CF681919024D2DAA4"
@@ -632,7 +641,7 @@ object Assignment3Standalone {
           desugarBlock(e2)
         )
       }
-      case Minus(SignalBlock(e1), SignalBlock(e2)) => {
+      case Minus(e1: Expr, e2: Expr) => {
         // hexdump -vn16 -e'4/4 "%08X" 1 "\n"' /dev/urandom
         var x = "4B33D660FED11FF6BF800293B0ADA1A8"
         var y = "272F0A0C4677340CF681919024D2DAA4"
@@ -646,7 +655,7 @@ object Assignment3Standalone {
           desugarBlock(e2)
         )
       }
-      case Times(SignalBlock(e1), SignalBlock(e2)) => {
+      case Times(e1: Expr, e2: Expr) => {
         // hexdump -vn16 -e'4/4 "%08X" 1 "\n"' /dev/urandom
         var x = "4B33D660FED11FF6BF800293B0ADA1A8"
         var y = "272F0A0C4677340CF681919024D2DAA4"
@@ -660,7 +669,7 @@ object Assignment3Standalone {
           desugarBlock(e2)
         )
       }
-      case Div(SignalBlock(e1), SignalBlock(e2)) => {
+      case Div(e1: Expr, e2: Expr) => {
         // hexdump -vn16 -e'4/4 "%08X" 1 "\n"' /dev/urandom
         var x = "4B33D660FED11FF6BF800293B0ADA1A8"
         var y = "272F0A0C4677340CF681919024D2DAA4"
@@ -674,7 +683,7 @@ object Assignment3Standalone {
           desugarBlock(e2)
         )
       }
-      case Eq(SignalBlock(e1), SignalBlock(e2)) => {
+      case Eq(e1: Expr, e2: Expr) => {
         // hexdump -vn16 -e'4/4 "%08X" 1 "\n"' /dev/urandom
         var x = "4B33D660FED11FF6BF800293B0ADA1A8"
         var y = "272F0A0C4677340CF681919024D2DAA4"
@@ -688,7 +697,7 @@ object Assignment3Standalone {
           desugarBlock(e2)
         )
       }
-      case GreaterThan(SignalBlock(e1), SignalBlock(e2)) => {
+      case GreaterThan(e1: Expr, e2: Expr) => {
         // hexdump -vn16 -e'4/4 "%08X" 1 "\n"' /dev/urandom
         var x = "4B33D660FED11FF6BF800293B0ADA1A8"
         var y = "272F0A0C4677340CF681919024D2DAA4"
@@ -704,7 +713,7 @@ object Assignment3Standalone {
           desugarBlock(e2)
         )
       }
-      case LessThan(SignalBlock(e1), SignalBlock(e2)) => {
+      case LessThan(e1: Expr, e2: Expr) => {
         // hexdump -vn16 -e'4/4 "%08X" 1 "\n"' /dev/urandom
         var x = "4B33D660FED11FF6BF800293B0ADA1A8"
         var y = "272F0A0C4677340CF681919024D2DAA4"
@@ -718,11 +727,12 @@ object Assignment3Standalone {
           desugarBlock(e2)
         )
       }
-      case TimeV   => TimeV
-      case Read(e) => Read(desugar(e))
-      case MoveXY(x, y, a) =>
+      case Time           => Time
+      case Read(e1: Expr) => Read(desugar(e1))
+      case MoveXY(x: Expr, y: Expr, a: Expr) =>
         MoveXY(desugarBlock(x), desugarBlock(y), desugarBlock(a))
-      case _ => sys.error("todo")
+      case Escape(e1: Expr) => desugar(e1)
+      case e                => e
       // END ANSWER
     }
   }
@@ -820,12 +830,83 @@ object Assignment3Standalone {
               case (v1: Value, ListV(v2)) => ListV(v1 :: v2) // must be values
             }
     }
-
+    def extractInt(v: Value): Int = { v match { case IntV(n) => n } }
+    def extractBool(v: Value): Boolean = { v match { case BoolV(n) => n } }
+    def extractList(v: Value): List[Value] = { v match { case ListV(n) => n } }
+    def extractString(v: Value): String = { v match { case StringV(n) => n } }
     def eval(expr: Expr): Value = expr match {
 
       // Values
       case v: Value => v
       // BEGIN ANSWER
+      case Plus(e1, e2) => {
+        val v1 = eval(e1)
+        val v2 = eval(e1)
+        IntV(extractInt(v1) + extractInt(v2))
+      }
+      case Minus(e1, e2) => {
+        val v1 = eval(e1)
+        val v2 = eval(e1)
+        IntV(extractInt(v1) - extractInt(v2))
+      }
+      case Times(e1, e2) => {
+        val v1 = eval(e1)
+        val v2 = eval(e1)
+        IntV(extractInt(v1) * extractInt(v2))
+      }
+      case Div(e1, e2) => {
+        val v1 = eval(e1)
+        val v2 = eval(e1)
+        IntV(extractInt(v1) / extractInt(v2))
+      }
+      case IfThenElse(e, e1, e2) => {
+        val v1 = eval(e)
+        val v2 = eval(e1)
+        val v3 = eval(e1)
+        extractBool(v1) match {
+          case true  => v2
+          case false => v3
+        }
+      }
+      case Eq(e1, e2) => {
+        val v1 = eval(e1)
+        val v2 = eval(e1)
+        v1 == v2 match {
+          case true  => BoolV(true)
+          case false => BoolV(false)
+        }
+      }
+      case GreaterThan(e1, e2) => {
+        val v1 = eval(e1)
+        val v2 = eval(e1)
+        BoolV(extractInt(v1) > extractInt(v2))
+      }
+      case LessThan(e1, e2) => {
+        val v1 = eval(e1)
+        val v2 = eval(e1)
+        BoolV(extractInt(v1) < extractInt(v2))
+      }
+      case App(e1, e2) => {
+        val v = eval(e1) // Lambda
+        var getVar =
+          (
+              (x: Expr) =>
+                x match {
+                  case Rec(f, x, tyx, ty, e) => (x, e, f, Rec(f, x, tyx, ty, e))
+                  case Lambda(x: Variable, ty: Type, e: Expr) => (x, ty, e)
+                  case _ => sys.error("Eval Error on Lambda: " + x)
+                }
+          )
+        val v1 = eval(e2)
+        var l = getVar(v)
+        l match {
+          case (x: Variable, e: Expr, f: Variable, r: Rec) =>
+            eval(subst(subst(e, v1, x), r, f))
+          case (x: Variable, ty: Variable, e: Expr) =>
+            eval(subst(e, v1, x))
+        }
+      }
+
       case _ => sys.error("todo")
       // END ANSWER
     }
