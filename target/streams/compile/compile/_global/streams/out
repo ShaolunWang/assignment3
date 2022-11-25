@@ -1,6 +1,6 @@
-[error] /Users/me/school/epl/cw3/Assn3/src/main/scala/Assignment3/RabbitStandalone.scala:908:24: type mismatch;
-[error]  found   : Any
+[error] /Users/me/school/epl/cw3/Assn3/src/main/scala/Assignment3/RabbitStandalone.scala:999:44: type mismatch;
+[error]  found   : List[Assignment3.RabbitSyntax.Syntax.Value]
 [error]  required: Assignment3.RabbitSyntax.Syntax.Expr
-[error]             eval(subst(e, v1, x))
-[error]                        ^
+[error]               eval(subst(subst(e2, v1, x), v2, y))
+[error]                                            ^
 [error] one error found

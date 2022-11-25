@@ -251,6 +251,7 @@ object Assignment3Standalone {
         assert(SignalTy(IntTy) == tyOf(ctx, e1))
         assert(SignalTy(IntTy) == tyOf(ctx, e2))
         assert(SignalTy(FrameTy) == tyOf(ctx, e3))
+
         SignalTy(FrameTy)
       }
       case When(e1: Expr, e2: Expr, e3: Expr) => {
@@ -328,7 +329,7 @@ object Assignment3Standalone {
         var t1 = tyOfSignal(ctx, e1)
         var t2 = tyOfSignal(ctx, e2)
         var t3 = tyOfSignal(ctx, e3)
-        assert(t1 == IntTy)
+        assert(t1 == BoolTy)
         assert(t2 == t3)
         t2
 
@@ -373,7 +374,9 @@ object Assignment3Standalone {
         FrameTy
       }
       case Over(e1: Expr, e2: Expr) => {
+
         assert(tyOfSignal(ctx, e1) == tyOfSignal(ctx, e2))
+
         assert(tyOfSignal(ctx, e1) == FrameTy)
         FrameTy
       }
@@ -477,97 +480,113 @@ object Assignment3Standalone {
 
   // ----------------------------------------------------------------
   // Substitution e1 [e2 / x]
+  //
   def subst(e1: Expr, e2: Expr, x: Variable): Expr = {
-
     e1 match {
-      case IntV(e)       => IntV(e)
-      case BoolV(e)      => BoolV(e)
-      case ListV(e)      => ListV(e)
-      case StringV(e)    => StringV(e)
-      case Plus(t1, t2)  => Plus(subst(t1, e2, x), subst(t2, e2, x))
-      case Minus(t1, t2) => Minus(subst(t1, e2, x), subst(t2, e2, x))
-      case Times(t1, t2) => Times(subst(t1, e2, x), subst(t2, e2, x))
-      case Div(t1, t2)   => Div(subst(t1, e2, x), subst(t2, e2, x))
-      case Eq(t1, t2)    => Eq(subst(t1, e2, x), subst(t2, e2, x))
+      case IntV(e)                => IntV(e)
+      case BoolV(e)               => BoolV(e)
+      case ListV(e)               => ListV(e)
+      case StringV(e)             => StringV(e)
+      case RecV(f, y, tyx, ty, e) => RecV(f, y, tyx, ty, e)
+      case FunV(a, b, e)          => FunV(a, b, e)
+      case Plus(t1, t2)           => Plus(subst(t1, e2, x), subst(t2, e2, x))
+      case Minus(t1, t2)          => Minus(subst(t1, e2, x), subst(t2, e2, x))
+      case Times(t1, t2)          => Times(subst(t1, e2, x), subst(t2, e2, x))
+      case Div(t1, t2)            => Div(subst(t1, e2, x), subst(t2, e2, x))
+      case Eq(t1, t2)             => Eq(subst(t1, e2, x), subst(t2, e2, x))
+      case App(t1, t2)            => App(subst(t1, e2, x), subst(t2, e2, x))
+      case PairV(fst, snd)        => PairV(fst, snd)
+      case WhenV(a, b, c)         => WhenV(a, b, c)
+      case ReadV(e)               => ReadV(e)
+      case MoveXYV(a, b, c)       => MoveXYV(a, b, c)
+
       case GreaterThan(t1, t2) =>
         GreaterThan(subst(t1, e2, x), subst(t2, e2, x))
       case LessThan(t1, t2) => LessThan(subst(t1, e2, x), subst(t2, e2, x))
-      case Lambda(y, ty, t1) => {
-        val z = Gensym.gensym(y)
-        val fresh_t1 = swap(t1, y, z)
-        Lambda(y, ty, subst(t1, e2, x))
+
+      case Lambda(y, ty, t0) => {
+        val z = Gensym.gensym(y);
+        Lambda(z, ty, subst(swap(t0, y, z), e2, x))
       }
-      case Rec(f: Variable, y: Variable, tyx: Type, ty: Type, t1: Expr) => {
-        // (rec f(y:τ):τ′.e0)[e/x] = rec g(z:τ):τ′.e0(y↔z)(f↔g)[e/x]
-        val g = Gensym.gensym(f)
-        val z = Gensym.gensym(y)
-        val fresh_t1 = swap(swap(t1, y, z), f, g)
-        Rec(g, z, tyx, ty, subst(fresh_t1, e2, x))
+      case Apply(t1, t2) => Apply(subst(t1, e2, x), subst(t2, e2, x))
+      case Rec(f, y, ty1, ty2, t0) => {
+        val g = Gensym.gensym(f);
+        val z = Gensym.gensym(y);
+        Rec(g, z, ty1, ty2, subst(swap(swap(t0, f, g), y, z), e2, x))
       }
+
+      // Syntactic sugar
+      case LetPair(y1, y2, t1, t2) => {
+        val y1z = Gensym.gensym(y1);
+        val y2z = Gensym.gensym(y2);
+        LetPair(
+          y1z,
+          y2z,
+          subst(t1, e2, x),
+          subst(swap(swap(t2, y1z, y1), y2z, y2), e2, x)
+        )
+      }
+
+      case LetFun(f, y, ty, t1, t2) => {
+        val fz = Gensym.gensym(f);
+        val yz = Gensym.gensym(y);
+        LetFun(
+          fz,
+          yz,
+          ty,
+          subst(swap(t1, yz, y), e2, x),
+          subst(swap(t2, fz, f), e2, x)
+        )
+      }
+
+      case LetRec(f, y, ty1, ty2, t1, t2) => {
+        val fz = Gensym.gensym(f);
+        val yz = Gensym.gensym(y);
+        LetRec(
+          fz,
+          yz,
+          ty1,
+          ty2,
+          subst(swap(swap(t1, fz, f), yz, y), e2, x),
+          subst(swap(t2, fz, f), e2, x)
+        )
+      }
+
       case IfThenElse(t, t1, t2) =>
-        IfThenElse(subst(t, e2, x), subst(t1, e2, x), subst(t1, e2, x))
+        IfThenElse(subst(t, e2, x), subst(t1, e2, x), subst(t2, e2, x))
+
       case Var(y) =>
         if (x == y) { e2 }
         else { Var(y) }
+
       case Let(y, t1, t2) => {
         val z = Gensym.gensym(y);
-        val fresh_t2 = swap(t2, y, z);
-        Let(z, subst(t1, e2, x), subst(fresh_t2, e2, x))
+        Let(z, subst(t1, e2, x), subst(swap(t2, y, z), e2, x))
       }
       case Pair(t1, t2) => Pair(subst(t1, e2, x), subst(t2, e2, x))
       case Fst(t)       => Fst(subst(t, e2, x))
       case Snd(t)       => Snd(subst(t, e2, x))
-      case LetPair(x, y, t1, t2) => {
-        // (let (y1, y2) = e1 in e2)[e/x] => let (z1, z2) = e1[e/x] in (e2(y1↔z1)(y2↔z2))[e/x]
-        val z1 = Gensym.gensym(x)
-        val z2 = Gensym.gensym(y)
-        val fresh_t2 = swap(swap(t2, x, z1), y, z2)
-        LetPair(z1, z2, subst(t1, e2, x), subst(fresh_t2, e2, x))
-      }
-      case LetFun(f: Variable, arg: Variable, ty: Type, t1: Expr, t2: Expr) => {
-        // (let fun f (y:τ) = e1 in e2)[e/x] => let fun g(z:τ) = (e1(y↔z))[e/x] in (e2(f↔g))[e/x]
-        val g = Gensym.gensym(f)
-        val z = Gensym.gensym(arg)
 
-        val fresh_t1 = swap(t1, arg, z)
-        val fresh_t2 = swap(t2, f, g)
-        LetFun(g, z, ty, subst(fresh_t1, e2, x), subst(fresh_t2, e2, x))
-      }
-      case LetRec(
-            f: Variable,
-            arg: Variable,
-            xty: Type,
-            ty: Type,
-            t1: Expr,
-            t2: Expr
-          ) => {
-        // (let rec f(y:τ):τ′ = e1 in e2)[e/x] => let rec g(z:τ):τ′ = (e1(f↔g)(y↔z))[e/x] in (e2(f↔g))[e/x]
-        val z = Gensym.gensym(arg)
-        val g = Gensym.gensym(f)
-        val fresh_t1 = swap((swap(t1, f, g)), arg, z)
-        val fresh_t2 = swap(t2, f, g)
-        LetRec(g, z, xty, ty, subst(fresh_t1, e2, x), subst(fresh_t2, e2, x))
-      }
       case EmptyList(ty) => EmptyList(ty)
-      case Cons(t1, t2)  => Cons(subst(t1, e2, x), subst(t1, e2, x))
+      case Cons(t1, t2)  => Cons(subst(t1, e2, x), subst(t2, e2, x))
       case ListCase(t1: Expr, t2: Expr, x1: Variable, y: Variable, t3: Expr) =>
-        ListCase(t1, subst(t2, e2, x), x1, y, subst(t3, e2, x))
-      case UnitV => UnitV
-      case Apply(t1: Expr, t2: Expr) =>
-        Apply(subst(t1, e2, x), subst(t2, e2, x))
-      case Read(t1: Expr)           => Read(subst(t1, e2, x))
-      case Pure(t)                  => Pure(subst(t, e2, x))
-      case Time                     => Time
-      case Blank                    => Blank
+        ListCase(subst(t1, e2, x), subst(t2, e2, x), x1, y, subst(t3, e2, x))
+      case UnitV          => UnitV
+      case Read(t1: Expr) => Read(subst(t1, e2, x))
+      case Pure(t)        => Pure(subst(t, e2, x))
+      case Time           => Time
+      case Blank          => Blank
+      case BlankV         => BlankV
+      case ApplyV(v1: Value, v2: Value) => ApplyV(v1, v2)
       case Over(t1: Expr, t2: Expr) => Over(subst(t1, e2, x), subst(t2, e2, x))
       case MoveXY(t1: Expr, t2: Expr, t3: Expr) =>
         MoveXY(subst(t1, e2, x), subst(t2, e2, x), subst(t3, e2, x))
       case When(t1: Expr, t2: Expr, t3: Expr) =>
         When(subst(t1, e2, x), subst(t2, e2, x), subst(t3, e2, x))
-      case SignalBlock(t1) => subst(t1, e2, x)
+      case SignalBlock(t1)  => SignalBlock(subst(t1, e2, x))
+      case Escape(t1: Expr) => Escape(subst(t1, e2, x))
+      case _                => sys.error("missing case: " + e1)
       // Signals
-
-      case _ => sys.error("Wrong Substitution!!")
     }
 
   }
@@ -578,50 +597,75 @@ object Assignment3Standalone {
   // ----------------------------------------------------------------
   // Desugaring
   def desugar(e: Expr): Expr = {
+
+    println("desugar: " + e)
     def desugarVal(v: Value): Value = v match {
-      case PairV(v1, v2)          => PairV(desugarVal(v1), desugarVal(v2))
-      case FunV(x, ty, e)         => FunV(x, ty, desugar(e))
-      case RecV(f, x, tyx, ty, e) => RecV(f, x, tyx, ty, desugar(e))
-      case ListV(vs)              => ListV(vs.map(desugarVal))
+      case PairV(v1, v2) => PairV(desugarVal(v1), desugarVal(v2))
+      case ListV(vs)     => ListV(vs.map(desugarVal))
       // Signal values do not appear before evaluation happens so do not need to be desugared
       case v => v
     }
     e match {
-      case v: Value => desugarVal(v)
+      case v: Value               => desugarVal(v)
+      case Var(x)                 => Var(x)
+      case Lambda(x, ty, e)       => Lambda(x, ty, desugar(e))
+      case Rec(f, x, ty1, ty2, e) => Rec(f, x, ty1, ty2, desugar(e))
       case LetFun(f: Variable, arg: Variable, ty: Type, e1: Expr, e2: Expr) =>
-        Let(f, Lambda(arg, ty, e1), e2)
-
-      case LetRec(
-            f: Variable,
-            arg: Variable,
-            xty: Type,
-            ty: Type,
-            e1: Expr,
-            e2: Expr
-          ) =>
-        Let(f, Rec(f, arg, xty, ty, e1), e2)
-      case LetPair(x: Variable, y: Variable, e1: Expr, e2: Expr) => {
-        val p = Gensym.gensym(x + " " + y)
-        val t1 = Fst(Var(p))
-        val t2 = Snd(Var(p))
-        Let(p, e1, subst(subst(e2, t1, x), t2, y))
+        desugar(Let(f, Lambda(arg, ty, e1), e2))
+      case LetPair(x, y, e1, e2) => {
+        val p = Gensym.gensym("p")
+        Let(
+          p,
+          desugar(e1),
+          subst(subst(desugar(e2), Fst(Var(p)), x), Snd(Var(p)), y)
+        )
       }
       case Seq(e1: Expr, e2: Expr) => {
-        var x = "4B33D660FED11FF6BF800293B0ADA1A8"
-        Let(x, e1, e2)
+        var x = "09ACA687A323914D465710EA28471E44"
+        desugar(Let(x, e1, e2))
       }
-      case se => desugarBlock(se)
-      // END ANSWER
+      case IfThenElse(e: Expr, e1: Expr, e2: Expr) =>
+        IfThenElse(desugar(e), desugar(e1), desugar(e2))
+      case LetRec(f, arg, xty, ty, e1, e2) => {
+        Let(f, Rec(f, arg, xty, ty, desugar(e1)), desugar(e2))
+      }
+      case ListCase(l, e1, x, y, e2) =>
+        ListCase(l, desugar(e1), x, y, desugar(e2))
+      case SignalBlock(se)          => desugarBlock(se)
+      case Over(e1: Expr, e2: Expr) => Over(desugar(e1), desugar(e2))
+      case App(e1: Expr, e2: Expr)  => App(desugar(e1), desugar(e2))
+      case Let(x: Variable, e1: Expr, e2: Expr) =>
+        Let(x, desugar(e1), desugar(e2))
+      case Cons(e1, e2)             => Cons(desugar(e1), desugar(e2))
+      case EmptyList(t)             => EmptyList(t)
+      case Blank                    => BlankV
+      case Pure(e)                  => Pure(desugar(e))
+      case Times(e1, e2)            => Times(desugar(e1), desugar(e2))
+      case Plus(e1, e2)             => Plus(desugar(e1), desugar(e2))
+      case Minus(e1, e2)            => Minus(desugar(e1), desugar(e2))
+      case Div(e1, e2)              => Div(desugar(e1), desugar(e2))
+      case Eq(e1, e2)               => Eq(desugar(e1), desugar(e2))
+      case GreaterThan(e1, e2)      => GreaterThan(desugar(e1), desugar(e2))
+      case LessThan(e1, e2)         => LessThan(desugar(e1), desugar(e2))
+      case Fst(e)                   => Fst(desugar(e))
+      case Snd(e)                   => Snd(desugar(e))
+      case Pair(e1: Expr, e2: Expr) => Pair(desugar(e1), desugar(e2))
+      case Read(e)                  => Read(desugar(e))
+      case When(e1, e2, e3) => When(desugar(e1), desugar(e2), desugar(e3))
+      case MoveXY(x: Expr, y: Expr, a: Expr) =>
+        MoveXY(desugar(x), desugar(y), desugar(a))
     }
   }
 
   /** ************** Exercise 6 *
     */
   def desugarBlock(e: Expr): Expr = {
+    println("block: " + e)
     e match {
       case v: Value => Pure(desugar(v))
       // BEGIN ANSWER
       case SignalBlock(se: Expr) => desugarBlock(se)
+      case Pure(v)               => desugar(Pure(v))
       case App(e1: Expr, e2: Expr) =>
         Apply(desugarBlock(e1), desugarBlock(e2))
       case IfThenElse(e: Expr, e1: Expr, e2: Expr) =>
@@ -629,8 +673,8 @@ object Assignment3Standalone {
       case Over(e1: Expr, e2: Expr) => Over(desugarBlock(e1), desugarBlock(e2))
       case Plus(e1: Expr, e2: Expr) => {
         // hexdump -vn16 -e'4/4 "%08X" 1 "\n"' /dev/urandom
-        var x = "4B33D660FED11FF6BF800293B0ADA1A8"
-        var y = "272F0A0C4677340CF681919024D2DAA4"
+        var x = "PLUS_4B33D"
+        var y = "PLUS_272F0"
         x = Gensym.gensym(x)
         y = Gensym.gensym(y)
         Apply(
@@ -643,8 +687,8 @@ object Assignment3Standalone {
       }
       case Minus(e1: Expr, e2: Expr) => {
         // hexdump -vn16 -e'4/4 "%08X" 1 "\n"' /dev/urandom
-        var x = "4B33D660FED11FF6BF800293B0ADA1A8"
-        var y = "272F0A0C4677340CF681919024D2DAA4"
+        var x = "MINUS_4B33D"
+        var y = "MINUS_272F0"
         x = Gensym.gensym(x)
         y = Gensym.gensym(y)
         Apply(
@@ -657,8 +701,8 @@ object Assignment3Standalone {
       }
       case Times(e1: Expr, e2: Expr) => {
         // hexdump -vn16 -e'4/4 "%08X" 1 "\n"' /dev/urandom
-        var x = "4B33D660FED11FF6BF800293B0ADA1A8"
-        var y = "272F0A0C4677340CF681919024D2DAA4"
+        var x = "TIMES_4B33D"
+        var y = "TIMES_272F0"
         x = Gensym.gensym(x)
         y = Gensym.gensym(y)
         Apply(
@@ -671,8 +715,8 @@ object Assignment3Standalone {
       }
       case Div(e1: Expr, e2: Expr) => {
         // hexdump -vn16 -e'4/4 "%08X" 1 "\n"' /dev/urandom
-        var x = "4B33D660FED11FF6BF800293B0ADA1A8"
-        var y = "272F0A0C4677340CF681919024D2DAA4"
+        var x = "DIV_4B33D"
+        var y = "DIV_272F0"
         x = Gensym.gensym(x)
         y = Gensym.gensym(y)
         Apply(
@@ -685,8 +729,8 @@ object Assignment3Standalone {
       }
       case Eq(e1: Expr, e2: Expr) => {
         // hexdump -vn16 -e'4/4 "%08X" 1 "\n"' /dev/urandom
-        var x = "4B33D660FED11FF6BF800293B0ADA1A8"
-        var y = "272F0A0C4677340CF681919024D2DAA4"
+        var x = "EQ_4B33D"
+        var y = "EQ_272F0"
         x = Gensym.gensym(x)
         y = Gensym.gensym(y)
         Apply(
@@ -699,8 +743,8 @@ object Assignment3Standalone {
       }
       case GreaterThan(e1: Expr, e2: Expr) => {
         // hexdump -vn16 -e'4/4 "%08X" 1 "\n"' /dev/urandom
-        var x = "4B33D660FED11FF6BF800293B0ADA1A8"
-        var y = "272F0A0C4677340CF681919024D2DAA4"
+        var x = "GT_4B33D"
+        var y = "GT_272F0"
         x = Gensym.gensym(x)
         y = Gensym.gensym(y)
         Apply(
@@ -715,8 +759,8 @@ object Assignment3Standalone {
       }
       case LessThan(e1: Expr, e2: Expr) => {
         // hexdump -vn16 -e'4/4 "%08X" 1 "\n"' /dev/urandom
-        var x = "4B33D660FED11FF6BF800293B0ADA1A8"
-        var y = "272F0A0C4677340CF681919024D2DAA4"
+        var x = "LT_4B33D"
+        var y = "LT_272F0"
         x = Gensym.gensym(x)
         y = Gensym.gensym(y)
         Apply(
@@ -732,7 +776,7 @@ object Assignment3Standalone {
       case MoveXY(x: Expr, y: Expr, a: Expr) =>
         MoveXY(desugarBlock(x), desugarBlock(y), desugarBlock(a))
       case Escape(e1: Expr) => desugar(e1)
-      case e                => e
+      case Var(x)           => desugar(Var(x))
       // END ANSWER
     }
   }
@@ -832,83 +876,138 @@ object Assignment3Standalone {
     }
     def extractInt(v: Value): Int = { v match { case IntV(n) => n } }
     def extractBool(v: Value): Boolean = { v match { case BoolV(n) => n } }
-    def extractList(v: Value): List[Value] = { v match { case ListV(n) => n } }
     def extractString(v: Value): String = { v match { case StringV(n) => n } }
-    def eval(expr: Expr): Value = expr match {
+    def eval(expr: Expr): Value = {
+      println("eval: " + expr)
+      expr match {
+        // Values
+        case v: Value => v
+        case EmptyList(ty) => ListV(List())
+        // BEGIN ANSWER
+        case Lambda(x, ty, e)       => FunV(x, ty, e)
+        case Rec(f, x, ty1, ty2, e) => RecV(f, x, ty1, ty2, e)
 
-      // Values
-      case v: Value => v
-      // BEGIN ANSWER
-      case Plus(e1, e2) => {
-        val v1 = eval(e1)
-        val v2 = eval(e1)
-        IntV(extractInt(v1) + extractInt(v2))
-      }
-      case Minus(e1, e2) => {
-        val v1 = eval(e1)
-        val v2 = eval(e1)
-        IntV(extractInt(v1) - extractInt(v2))
-      }
-      case Times(e1, e2) => {
-        val v1 = eval(e1)
-        val v2 = eval(e1)
-        IntV(extractInt(v1) * extractInt(v2))
-      }
-      case Div(e1, e2) => {
-        val v1 = eval(e1)
-        val v2 = eval(e1)
-        IntV(extractInt(v1) / extractInt(v2))
-      }
-      case IfThenElse(e, e1, e2) => {
-        val v1 = eval(e)
-        val v2 = eval(e1)
-        val v3 = eval(e1)
-        extractBool(v1) match {
-          case true  => v2
-          case false => v3
+        case Plus(e1, e2) => {
+          val v1 = eval(e1)
+          val v2 = eval(e1)
+          IntV(extractInt(v1) + extractInt(v2))
         }
-      }
-      case Eq(e1, e2) => {
-        val v1 = eval(e1)
-        val v2 = eval(e1)
-        v1 == v2 match {
-          case true  => BoolV(true)
-          case false => BoolV(false)
+        case Minus(e1, e2) => {
+          val v1 = eval(e1)
+          val v2 = eval(e1)
+          IntV(extractInt(v1) - extractInt(v2))
         }
-      }
-      case GreaterThan(e1, e2) => {
-        val v1 = eval(e1)
-        val v2 = eval(e1)
-        BoolV(extractInt(v1) > extractInt(v2))
-      }
-      case LessThan(e1, e2) => {
-        val v1 = eval(e1)
-        val v2 = eval(e1)
-        BoolV(extractInt(v1) < extractInt(v2))
-      }
-      case App(e1, e2) => {
-        val v = eval(e1) // Lambda
-        var getVar =
-          (
-              (x: Expr) =>
-                x match {
-                  case Rec(f, x, tyx, ty, e) => (x, e, f, Rec(f, x, tyx, ty, e))
-                  case Lambda(x: Variable, ty: Type, e: Expr) => (x, ty, e)
-                  case _ => sys.error("Eval Error on Lambda: " + x)
-                }
-          )
-        val v1 = eval(e2)
-        var l = getVar(v)
-        l match {
-          case (x: Variable, e: Expr, f: Variable, r: Rec) =>
-            eval(subst(subst(e, v1, x), r, f))
-          case (x: Variable, ty: Variable, e: Expr) =>
-            eval(subst(e, v1, x))
+        case Times(e1, e2) => {
+          val v1 = eval(e1)
+          val v2 = eval(e1)
+          IntV(extractInt(v1) * extractInt(v2))
         }
-      }
+        case Div(e1, e2) => {
+          val v1 = eval(e1)
+          val v2 = eval(e1)
+          IntV(extractInt(v1) / extractInt(v2))
+        }
+        case IfThenElse(e, e1, e2) => {
+          val v1 = eval(e)
+          val v2 = eval(e1)
+          val v3 = eval(e1)
+          extractBool(v1) match {
+            case true  => v2
+            case false => v3
+          }
+        }
+        case Eq(e1, e2) => {
+          val v1 = eval(e1)
+          val v2 = eval(e1)
+          v1 == v2 match {
+            case true  => BoolV(true)
+            case false => BoolV(false)
+          }
+        }
+        case GreaterThan(e1, e2) => {
+          val v1 = eval(e1)
+          val v2 = eval(e1)
+          BoolV(extractInt(v1) > extractInt(v2))
+        }
+        case LessThan(e1, e2) => {
+          val v1 = eval(e1)
+          val v2 = eval(e1)
+          BoolV(extractInt(v1) < extractInt(v2))
+        }
+        case App(e1: Expr, e2: Expr) => {
 
-      case _ => sys.error("todo")
-      // END ANSWER
+          val v1 = eval(e2)
+          val l = eval(e1)
+          var getVar =
+            (
+                (x: Expr) =>
+                  x match {
+                    case RecV(f, x, tyx, ty, e) => {
+                      var sub_r =
+                        subst(subst(e, v1, x), RecV(f, x, tyx, ty, e), f)
+                      eval(sub_r)
+                    }
+                    case FunV(x: Variable, ty: Type, e) => {
+                      var sub_e = subst(e, v1, x)
+                      eval(sub_e)
+                    }
+                    case _ => sys.error("Eval Error on Lambda/Rec: " + x)
+                  }
+            )
+          getVar(l)
+        }
+
+        case Let(x: Variable, e1: Expr, e2: Expr) => {
+          val v1 = eval(e1)
+          eval(subst(e2, v1, x))
+        }
+        case Cons(e1: Expr, e2: Expr) => {
+          val v1 = eval(e1)
+
+          val v2 = eval(e2)
+          (v1, v2) match {
+            case (v1: Value, ListV(v2)) => ListV(v1 :: v2) // must be values
+            case _                      => sys.error("wrong with: " + v2)
+          }
+
+        }
+        case ListCase(
+              e: Expr,
+              e1: Expr,
+              x: Variable,
+              y: Variable,
+              e2: Expr
+            ) => {
+          eval(e) match {
+            case ListV(v1 :: v2 :: Nil) => {
+              eval(subst(subst(e2, v1, x), v2, y))
+            }
+            case _ => eval(e1)
+          }
+        }
+        case Pair(e1, e2) => PairV(eval(e1), eval(e2))
+        case Fst(e1) =>
+          e1 match {
+            case PairV(v1, v2) => eval(v1)
+            case _             => sys.error("eval mismatch at Fst: " + e1)
+          }
+        case Snd(e1) =>
+          e1 match {
+            case PairV(v1, v2) => eval(v2)
+            case _             => sys.error("eval mismatch at Fst: " + e1)
+          }
+        case Pure(e: Expr)             => PureV(eval(e))
+        case Apply(e1: Expr, e2: Expr) => ApplyV(eval(e1), eval(e2))
+        case MoveXY(a: Expr, b: Expr, c: Expr) =>
+          MoveXYV(eval(a), eval(b), eval(c))
+        case Read(e: Expr)            => ReadV(eval(e))
+        case Over(e1: Expr, e2: Expr) => OverV(eval(e1), eval(e2))
+        case Time                     => TimeV
+        case When(e1: Expr, e2: Expr, e3: Expr) =>
+          WhenV(eval(e1), eval(e2), eval(e3))
+        // END ANSWER
+        case _ => sys.error("eval missing case for : " + expr)
+      }
     }
 
   }
@@ -1137,5 +1236,4 @@ object Assignment3Standalone {
       )
     }
   }
-
 }

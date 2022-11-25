@@ -1,2 +1,2 @@
 signal { over(moveXY(time * 50 - 500, 200, read("turtle")),
-              moveXY(when(time < 5, time * 100 - 500, 0),  0 - 200, read("rabbit"))) }
+	  moveXY(if time < 5 then time * 100 - 500 else 0,  0 - 200, read("rabbit"))) }
