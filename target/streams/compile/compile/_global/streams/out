@@ -1,6 +1,7 @@
-[error] /Users/me/school/epl/cw3/Assn3/src/main/scala/Assignment3/RabbitStandalone.scala:999:44: type mismatch;
-[error]  found   : List[Assignment3.RabbitSyntax.Syntax.Value]
-[error]  required: Assignment3.RabbitSyntax.Syntax.Expr
-[error]               eval(subst(subst(e2, v1, x), v2, y))
-[error]                                            ^
-[error] one error found
+[error] /Users/me/school/epl/cw3/Assn3/RunRabbit.scala:3:1: expected class or object definition
+[error] def anim = (moveXY(((pure({MINUS_4B33D_0: Int => {MINUS_272F0_1: Int => (MINUS_4B33D_0) - (MINUS_272F0_1)}})) <*> (((pure({TIMES_4B33D_2: Int => {TIMES_272F0_3: Int => (TIMES_4B33D_2) * (TIMES_272F0_3)}})) <*> (time)) <*> (pure(50)))) <*> (pure(500)), pure(200), read("turtle"))<+>moveXY(when(((pure({LT_4B33D_4: Int => {LT_272F0_5: Int => (LT_4B33D_4) < (LT_272F0_5)}})) <*> (time)) <*> (pure(5)), ((pure({MINUS_4B33D_6: Int => {MINUS_272F0_7: Int => (MINUS_4B33D_6) - (MINUS_272F0_7)}})) <*> (((pure({TIMES_4B33D_8: Int => {TIMES_272F0_9: Int => (TIMES_4B33D_8) * (TIMES_272F0_9)}})) <*> (time)) <*> (pure(100)))) <*> (pure(500)), pure(0)), ((pure({MINUS_4B33D_10: Int => {MINUS_272F0_11: Int => (MINUS_4B33D_10) - (MINUS_272F0_11)}})) <*> (pure(0))) <*> (pure(200)), read("rabbit"))) 
+[error] ^
+[error] /Users/me/school/epl/cw3/Assn3/RunRabbit.scala:4:1: expected class or object definition
+[error] saveToFile(anim, 20, "turtleAndRabbit.gif")
+[error] ^
+[error] two errors found

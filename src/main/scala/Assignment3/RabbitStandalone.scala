@@ -598,7 +598,6 @@ object Assignment3Standalone {
   // Desugaring
   def desugar(e: Expr): Expr = {
 
-    println("desugar: " + e)
     def desugarVal(v: Value): Value = v match {
       case PairV(v1, v2) => PairV(desugarVal(v1), desugarVal(v2))
       case ListV(vs)     => ListV(vs.map(desugarVal))
@@ -660,7 +659,6 @@ object Assignment3Standalone {
   /** ************** Exercise 6 *
     */
   def desugarBlock(e: Expr): Expr = {
-    println("block: " + e)
     e match {
       case v: Value => Pure(desugar(v))
       // BEGIN ANSWER
@@ -878,7 +876,6 @@ object Assignment3Standalone {
     def extractBool(v: Value): Boolean = { v match { case BoolV(n) => n } }
     def extractString(v: Value): String = { v match { case StringV(n) => n } }
     def eval(expr: Expr): Value = {
-      println("eval: " + expr)
       expr match {
         // Values
         case v: Value => v
